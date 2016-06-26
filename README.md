@@ -13,7 +13,7 @@ Dependencies:
 
     numpy
 
-    scikit
+    scipy
 
     sklearn
 
