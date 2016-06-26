@@ -1,14 +1,26 @@
 # porn_sieve
 Improve your masturbation efficiency!
 
+What is it?
+
+Porn Sieve learns your adult interests and then fetches videos
+that match those interests from xvideos.com. I am in no way
+associated with that website and in the future I plan on adding
+more websites.
+
 
 Dependencies:
+
     numpy
+
     scikit
+
     sklearn
+
     pyside
 
 How to use:
+
     Run main.py with python3.
 
     The top-left corner includes a list of fetishes to select.
