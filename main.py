@@ -208,8 +208,12 @@ class Window(QtGui.QWidget):
         data["feedback"] = self.slider.value() + 0.0001 # db doesn't like 0s
         with self.winlock:
             self.predict.fit(data)
-        self.pop_video()
-        self.refresh_images()
+        if self.q.empty():
+            self.infoBox.setText("Queue Empty")
+            self.repaint()
+        else:
+            self.pop_video()
+            self.refresh_images()
 
 
     def update_prog(self, progress):
@@ -227,8 +231,12 @@ class Window(QtGui.QWidget):
 
 
     def skip(self):
-        self.pop_video()
-        self.refresh_images()
+        if self.q.empty():
+            self.info_box.setText("Queue Empty")
+            self.repaint()
+        else:
+            self.pop_video()
+            self.refresh_images()
 
 
     def set_niche(self, text):
