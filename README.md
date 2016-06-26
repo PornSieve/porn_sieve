@@ -48,6 +48,5 @@ How to use:
 
     Skip will move on to the next video, while failing to record a rating.
 
-    Pressing quit makes sure any active threads are terminated before
-    exiting. I'm not entirely sure why you would want that, but it felt
-    like the UI needed another button to look right.
+    Pressing quit directly is REQUIRED to save your currently saved data
+    and prediction model. This will likely be improved in the future.
