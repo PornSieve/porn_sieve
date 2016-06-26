@@ -164,7 +164,8 @@ class Window(QtGui.QWidget):
 
         info_str = info_str.format(data["dur"],
                                    data["views"],
-                                   round(self.last_pred, 2),
+                                   # old design had an out of 6 scale
+                                   round(self.last_pred*100/6, 2),
                                    tag_str)
         self.info_box.setText(info_str)
 
@@ -172,6 +173,7 @@ class Window(QtGui.QWidget):
     def pop_video(self):
         if self.q.empty():
             self.info_box.setText("Video queue empty.")
+            self.repaint()
             return self.last_pred, self.cur_vid
         self.last_pred, self.cur_vid = self.q.get()
         self.last_pred *= -1
@@ -252,7 +254,7 @@ class Window(QtGui.QWidget):
             self.thr.exit_flag = True
             for _ in range(4):
                 if not self.thr.exit_ready:
-                    time.sleep(0.5)
+                    time.sleep(0.25)
         QtCore.QCoreApplication.instance().quit()
 
 
