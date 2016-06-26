@@ -211,7 +211,7 @@ class Window(QtGui.QWidget):
         with self.winlock:
             self.predict.fit(data)
         if self.q.empty():
-            self.infoBox.setText("Queue Empty")
+            self.info_box.setText("Queue Empty")
             self.repaint()
             self.default_img_flag = True
         else:
