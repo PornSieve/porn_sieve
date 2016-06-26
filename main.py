@@ -239,10 +239,10 @@ class Window(QtGui.QWidget):
         if self.q.empty():
             self.info_box.setText("Queue Empty")
             self.repaint()
+            self.default_img_flag = True
         else:
             self.pop_video()
             self.refresh_images()
-            self.default_img_flag = True
 
 
     def set_niche(self, text):
