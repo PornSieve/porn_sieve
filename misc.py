@@ -1,0 +1,59 @@
+import csv
+import re
+
+from sklearn.preprocessing import MultiLabelBinarizer
+
+from database import Database
+from predict  import Predictor
+
+
+def memoize(callback):
+    memos = {}
+    def inner(datum):
+        if datum not in memos:
+            memos[datum] = callback(datum)
+        return memos[datum]
+    return inner
+
+
+@memoize  # not a big deal, but I don't want to reload this more than once
+def get_niche_xpaths(site_name):
+    with open("{}/niches.csv".format(site_name)) as f:
+        return {k: v for k, v in csv.reader(f)}
+
+
+def fmt_gallery(site_name, niche, page):
+    if "xvideos" in site_name:
+        base_url = "http://www.xvideos.com"
+        sub_url  = get_niche_xpaths("xvideos")[niche]
+        if "New" in niche:
+            if page == 0:
+                return base_url
+            else:
+                return base_url + "/new/" + str(page)
+
+        elif "Best" in niche:
+            return base_url + sub_url + "/" + str(page)
+
+        else:
+            return base_url + sub_url.replace("/c/", "/c/%i/" % page)
+    else:
+        raise NotImplementedError
+
+
+def fmt_img(img_url, pic_num, total_pics):
+    """ Replace the image preview url with a link to
+      some preview in between. Indexes from zero. """
+    # All preview images are between 1 and 30 inclusive.
+    interval = 29 / total_pics
+    pic_id = str(int(pic_num * interval + 1))
+    new_url = re.sub("(?<=\.)[0-9]*(?=\.jpg$)", pic_id, img_url)
+    return new_url
+
+
+def redo_predictions(predictor, iterations, q):
+    db = Database()
+    for i in range(iterations):
+        old_pred, url = q.get()
+        new_pred = predictor.predict(db.get(url))
+        q.put((-new_pred, url))

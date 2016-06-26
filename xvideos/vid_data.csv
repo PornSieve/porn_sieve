@@ -1,0 +1,6 @@
+name|//h2/text()
+tags|//span[@class='video-tags']/a/text()
+views|//strong[@id='nb-views-number']/text()
+likes|//span[@class='rating-box']/text()
+dur|//span[@class='duration']/text()
+stars|//a[contains(@href, '/profiles/')]/text()
