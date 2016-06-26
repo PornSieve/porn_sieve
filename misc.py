@@ -53,7 +53,11 @@ def fmt_img(img_url, pic_num, total_pics):
 
 def redo_predictions(predictor, iterations, q):
     db = Database()
+    out_of_q = []
     for i in range(iterations):
-        old_pred, url = q.get()
-        new_pred = predictor.predict(db.get(url))
+        if not q.empty():
+            old_pred, url = q.get()
+            new_pred = predictor.predict(db.get(url))
+            out_of_q.append((new_pred, url))
+    for new_pred, url in out_of_q:
         q.put((-new_pred, url))
