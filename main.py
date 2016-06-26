@@ -250,8 +250,9 @@ class Window(QtGui.QWidget):
         self.predict.quit()
         if self.thr:
             self.thr.exit_flag = True
-            while not self.thr.exit_ready:
-                pass
+            for _ in range(4):
+                if not self.thr.exit_ready:
+                    time.sleep(0.5)
         QtCore.QCoreApplication.instance().quit()
 
 
