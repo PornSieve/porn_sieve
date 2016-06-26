@@ -165,7 +165,7 @@ class Window(QtGui.QWidget):
         info_str = info_str.format(data["dur"],
                                    data["views"],
                                    # old design had an out of 6 scale
-                                   round(self.last_pred*100/6, 2),
+                                   round(self.last_pred, 2),
                                    tag_str)
         self.info_box.setText(info_str)
 
@@ -205,7 +205,7 @@ class Window(QtGui.QWidget):
 
 
     def rate(self):
-        self.db.give_feedback(self.cur_vid, self.slider.value()/100*6)
+        self.db.give_feedback(self.cur_vid, self.slider.value())
         data = self.db.get(self.cur_vid)
         data["feedback"] = self.slider.value() + 0.0001 # db doesn't like 0s
         with self.winlock:

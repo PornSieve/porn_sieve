@@ -38,7 +38,7 @@ class Predictor:
 
 
     def refit_from_scratch(self):
-        temp_model = PassiveAggressiveRegressor()
+        temp_model = PassiveAggressiveRegressor(0.1)
         temp_enc   = CountVectorizer()
         X = []   # binary matrix the presence of tags
         Z = []   # additional numerical data

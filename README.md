@@ -1,6 +1,7 @@
 # porn_sieve
 Improve your masturbation efficiency!
 
+
 What is it?
 
 Porn Sieve learns your adult interests and then fetches videos
@@ -19,6 +20,7 @@ Dependencies:
 
     pyside
 
+
 How to use:
 
     Run main.py with python3.
@@ -30,9 +32,12 @@ How to use:
     Press scrape when you want the program to load up porn for you. A
     preview should appear on the screen if everything is working okay.
 
-    Note that if this is you first time using the program, you may have
-    to manually recalculate your model often before it gets a good idea
-    of what you like to see.
+    Recalculate predictions should be working properly now and redo
+    its prediction for the videos sitting in the video queue. This may
+    be necessary in the beginning when the program is still learning
+    your interests. Personally, I've found that it may be just as
+    important to rate videos you don't like as those you do. I try to
+    get an even split in the beginning before the thing warms up.
 
     On the right is a slider, the rate button, the open button and the
     skip button. When the slider is at the bottom, that inidicates a
@@ -48,5 +53,6 @@ How to use:
 
     Skip will move on to the next video, while failing to record a rating.
 
-    Pressing quit directly is REQUIRED to save your currently saved data
-    and prediction model. This will likely be improved in the future.
+    Pressing quit directly will save your model and encoder in its current
+    state. Without it, a new model must be train from scratch which depend-
+    ing on the amount of data saved, can take a long time.
