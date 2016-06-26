@@ -192,8 +192,10 @@ class Window(QtGui.QWidget):
     def scrape(self):
         if self.thr:
             self.thr.exit_flag = True
-            while not self.thr.exit_ready:
-                time.sleep(0.5)
+            for _ in range(4):
+                if not self.thr.exit_ready:
+                    time.sleep(0.25)
+            del self.thr
         self.update_prog(0)
         self.thr = PopulateQ(
                               self.site,        self.niche,        self.q,
