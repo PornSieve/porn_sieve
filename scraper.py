@@ -27,7 +27,11 @@ def scrape_video(url):
     if "xvideos" in url:
         dirty = re.compile("[^a-zA-Z0-9\ _]*")
         clean = lambda s: dirty.sub("", s).lower()
-        pg = download(url)
+        try:
+            pg = download(url)
+        except requests.exceptions.HTTPError:
+            # This is needed when a deleted video shows up in the gallery
+            return False
         with open("xvideos/vid_data.csv") as f:
             xpaths = {k: v for k, v in csv.reader(f, delimiter="|")}
         data = {}
@@ -115,6 +119,8 @@ class PopulateQ(QtCore.QThread):
                         return None
 
                 data = scrape_video(vid_url)
+                if not data:
+                    continue
                 data["img"] = img_url
                 if not db.has_feedback(data["url"]):
                     db.save(data)
