@@ -32,15 +32,25 @@ class Window(QtGui.QWidget):
 
         self.default_img_flag = True
 
-        self.init_ui()
+        self.preview_size = 2**9  # arbitrary number
+
+        # Create the entirety of the GUI and
+        # link to appropriate functions.
+        self.setWindowTitle('Porn!')
+        self.layout = QtGui.QHBoxLayout()
+
+        self.init_left_pane()
+        self.init_middle_pane()
+        self.init_right_pane()
+
+        self.setLayout(self.layout)
+        self.show()
+
         self.predict = Predictor()
 
 
-    def init_ui(self):
-        """ Create the entirety of the GUI and
-          link to appropriate functions. """
-        self.setWindowTitle('Porn!')
-        self.layout = QtGui.QGridLayout()
+    def init_left_pane(self):
+        self.left_pane = QtGui.QVBoxLayout()
 
         # NICHE COMBO: make dropdown menu to select a fetish
         self.niche_combo = QtGui.QComboBox(self)
@@ -50,84 +60,134 @@ class Window(QtGui.QWidget):
         self.niche_combo.setCurrentIndex(0)
         self.niche = keys[0]
         self.niche_combo.activated[str].connect(self.set_niche)
-        self.layout.addWidget(self.niche_combo, 0, 0, 1, 2)
+        self.left_pane.addWidget(self.niche_combo)
 
-        # START PG: spinbox to indicate the page to start scraping on
-        self.start_lbl = QtGui.QLabel(self)
-        self.start_lbl.setText("start page")
-        self.layout.addWidget(self.start_lbl, 2, 0, 1, 1)
-
-        self.start_pg_spn = QtGui.QSpinBox(self)
-        self.start_pg_spn.valueChanged[int].connect(self.set_start_pg)
-        self.layout.addWidget(self.start_pg_spn, 3, 0, 1, 1)
-
-        # NUM PGS: spinbox to indicate the number of pages to scrape
-        self.n_pgs_lbl = QtGui.QLabel(self)
-        self.n_pgs_lbl.setText("pages to scrape")
-        self.layout.addWidget(self.n_pgs_lbl, 2, 1, 1, 1)
-
-        self.n_pgs_spn = QtGui.QSpinBox(self)
-        self.n_pgs_spn.setMinimum(1)
-        self.n_pgs_spn.valueChanged[int].connect(self.set_max_pgs)
-        self.layout.addWidget(self.n_pgs_spn, 3, 1, 1, 1)
-
+        # START PG AND PGS TO SCRAPE
+        self.left_pane.addSpacing(50)
+        self.init_page_btns()
+        self.left_pane.addSpacing(25)
+        
         # PROGRESS BAR: tracks the progress of the scraper
         self.prog = QtGui.QProgressBar(self)
-        self.layout.addWidget(self.prog, 6, 0, 1, 2)
+        self.left_pane.addWidget(self.prog)
 
         # SCRAPE: begin scraping
         self.scrape_btn = QtGui.QPushButton("scrape", self)
         self.scrape_btn.clicked.connect(self.scrape)
-        self.layout.addWidget(self.scrape_btn, 7, 0, 1, 2)
+        self.left_pane.addWidget(self.scrape_btn)
+        self.left_pane.addSpacing(25)
 
         # RETRAIN: manual retraining of prediction algorithm
         self.train_btn = QtGui.QPushButton("recalculate prediction model", self)
         self.train_btn.clicked.connect(self.retrain)
-        self.layout.addWidget(self.train_btn, 9, 0, 1, 2)
+        self.left_pane.addWidget(self.train_btn)
+        self.left_pane.addSpacing(75)
 
         # QUIT: make quit button
         self.quit_btn = QtGui.QPushButton("quit", self)
         self.quit_btn.clicked.connect(self.quit)
-        self.layout.addWidget(self.quit_btn, 11, 0, 1, 2)
+        self.left_pane.addWidget(self.quit_btn)
+
+        self.layout.addLayout(self.left_pane)
+
+
+    def init_middle_pane(self):
+        self.mid_pane = QtGui.QHBoxLayout()
 
         # IMGS: images which will display the video preview
-        img_len = 12
-        self.imgs = []
-        pic_num = 0
         pixmap = QtGui.QPixmap("0.jpg")
+        pixmap.scaledToWidth(self.preview_size)
+        pixmap.scaledToHeight(self.preview_size)
         img_lbl = QtGui.QLabel(self)
         img_lbl.setPixmap(pixmap)
-        self.imgs.append(img_lbl)
-        self.layout.addWidget(img_lbl, 0, 3, img_len, img_len)
+
+        # Make sure the window isn't constantly resizing
+        img_lbl.setScaledContents(True)
+        img_lbl.setMaximumWidth(self.preview_size)
+        img_lbl.setMaximumHeight(self.preview_size)
+
+        self.img = img_lbl
+        self.mid_pane.addWidget(self.img)
 
         # SLIDER: slide to rate the quality of the video
         self.slider = QtGui.QSlider(self, QtCore.Qt.Vertical)
         self.slider.setTickPosition(QtGui.QSlider.TicksBothSides)
         self.slider.setTickInterval(20)
-        self.layout.addWidget(self.slider, 0, img_len + 3, img_len, 1)
+        self.mid_pane.addWidget(self.slider)
+        
+        self.layout.addLayout(self.mid_pane)
+
+
+    def init_right_pane(self):
+        self.right_pane = QtGui.QVBoxLayout()
 
         # RATE button
         self.rate_btn = QtGui.QPushButton("rate", self)
         self.rate_btn.clicked.connect(self.rate)
-        self.layout.addWidget(self.rate_btn, 0, img_len + 4, 1, 2)
+        self.right_pane.addWidget(self.rate_btn)
 
         # OPEN button
         self.open_btn = QtGui.QPushButton("open", self)
         self.open_btn.clicked.connect(lambda: webbrowser.open(self.cur_vid))
-        self.layout.addWidget(self.open_btn, 1, img_len + 4, 1, 2)
+        self.right_pane.addWidget(self.open_btn)
 
         # INFO box
         self.info_box = QtGui.QLabel(self)
         self.info_box.setText("")
-        self.layout.addWidget(self.info_box, 3, img_len + 4, 1, 1)
+        self.right_pane.addWidget(self.info_box)
 
         # SKIP button
+        # by some magic this is aligned correctly
         self.skip_btn = QtGui.QPushButton("skip", self)
         self.skip_btn.clicked.connect(self.skip)
-        self.layout.addWidget(self.skip_btn, img_len - 1, img_len + 4, 1, 2)
+        self.right_pane.addWidget(self.skip_btn)
 
-        self.setLayout(self.layout)
-        self.show()
+        self.layout.addLayout(self.right_pane)
+
+
+    def init_page_btns(self):
+        """
+        Create the start page and pages to scrape buttons along
+        with their corresponding labels. Each label and spinbox
+        is first grouped together vertically, then put together
+        with the other spinbox horizontally and finally into the
+        main layout of our window.
+        """
+        self.pg_spinboxes = QtGui.QHBoxLayout()
+
+        # START PG: spinbox to indicate the page to start scraping on
+        self.start_pg_group = QtGui.QVBoxLayout()
+        self.start_pg_group.setAlignment(QtCore.Qt.AlignTop)
+
+        self.start_lbl = QtGui.QLabel(self)
+        self.start_lbl.setText("start page")
+
+        self.start_pg_spn = QtGui.QSpinBox(self)
+        self.start_pg_spn.valueChanged[int].connect(self.set_start_pg)
+
+        self.start_pg_group.addWidget(self.start_lbl)     # "start page"
+        self.start_pg_group.addWidget(self.start_pg_spn)  # <spinbox>
+        self.pg_spinboxes.addLayout(self.start_pg_group)
+        self.pg_spinboxes.addSpacing(20)
+
+        # NUM PGS: spinbox to indicate the number of pages to scrape
+        self.n_pgs_group = QtGui.QVBoxLayout()
+        self.n_pgs_group.setAlignment(QtCore.Qt.AlignTop)
+
+        self.n_pgs_lbl = QtGui.QLabel(self)
+        self.n_pgs_lbl.setText("pages to scrape")
+
+        self.n_pgs_spn = QtGui.QSpinBox(self)
+        self.n_pgs_spn.valueChanged[int].connect(self.set_max_pgs)
+        
+        self.n_pgs_group.addWidget(self.n_pgs_lbl)        # "pages to scrape"
+        self.n_pgs_group.addWidget(self.n_pgs_spn)        # <spinbox>
+        self.n_pgs_group.setAlignment(QtCore.Qt.Vertical)
+        self.pg_spinboxes.addLayout(self.n_pgs_group)
+
+        # Combine both in a box.
+        self.pg_spinboxes.setAlignment(QtCore.Qt.AlignTop)
+        self.left_pane.addLayout(self.pg_spinboxes)
 
 
     def retrain(self):
@@ -142,10 +202,10 @@ class Window(QtGui.QWidget):
         if r.status_code == 200:
             pixmap = QtGui.QPixmap()
             pixmap.loadFromData(r.content)
-            pixmap.scaledToWidth(255)     # 255 is just an arbitrary size
-            pixmap.scaledToHeight(255)
-            self.imgs[0].setPixmap(pixmap)
-            self.imgs[0].update()
+            pixmap.scaledToWidth(self.preview_size)
+            pixmap.scaledToHeight(self.preview_size)
+            self.img.setPixmap(pixmap)
+            self.img.update()
             self.repaint()
         r.close()
         data = self.db.get(self.cur_vid)
