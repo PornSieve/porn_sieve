@@ -8,7 +8,7 @@ import requests
 import webbrowser
 
 from misc      import get_niche_xpaths, fmt_img, redo_predictions
-from scraper   import PopulateQ
+from scraper   import PopulateQ, scrape_video
 from database  import Database
 from predict   import Predictor
 
@@ -77,11 +77,31 @@ class Window(QtGui.QWidget):
         self.left_pane.addWidget(self.scrape_btn)
         self.left_pane.addSpacing(25)
 
+        # LOAD URL: load a specific url, presumably for rating.
+        self.load_url_box = QtGui.QLineEdit()
+        self.load_url_box.setPlaceholderText("load a specific url")
+
+        self.feedback_spin = QtGui.QSpinBox()
+        self.feedback_spin.setMaximum(100)          # (ratings must be between 0 and 100)
+
+        self.enter_btn = QtGui.QPushButton("save")  # also on bottom is the enter/save button
+        self.enter_btn.clicked.connect(lambda: self.save_usr_url())
+
+        self.load_url_extra = QtGui.QHBoxLayout()   # put feedback and enter in one row
+        self.load_url_extra.addWidget(self.feedback_spin)
+        self.load_url_extra.addWidget(self.enter_btn)
+
+        self.load_url_group = QtGui.QVBoxLayout()   # group it all together
+        self.load_url_group.addWidget(self.load_url_box)
+        self.load_url_group.addLayout(self.load_url_extra)
+        self.left_pane.addLayout(self.load_url_group)
+        self.left_pane.addSpacing(25)
+
         # RETRAIN: manual retraining of prediction algorithm
         self.train_btn = QtGui.QPushButton("recalculate prediction model", self)
         self.train_btn.clicked.connect(self.retrain)
         self.left_pane.addWidget(self.train_btn)
-        self.left_pane.addSpacing(75)
+        self.left_pane.addSpacing(50)
 
         # QUIT: make quit button
         self.quit_btn = QtGui.QPushButton("quit", self)
@@ -198,12 +218,20 @@ class Window(QtGui.QWidget):
         QtGui.QApplication.restoreOverrideCursor()
 
 
+    def save_usr_url(self):
+        sys.stdout.flush()
+        url = self.load_url_box.text()
+        data = scrape_video(url)
+        self.db.save(data)
+        self.db.give_feedback(url, self.feedback_spin.value())
+        print("finished")
+
+
     def refresh_images(self):
         try:
             r = requests.get(self.cur_img)
         except:
-            time.sleep(6)
-            r = requests.get(self.cur_img)
+            return None
 
         if r.status_code == 200:
             pixmap = QtGui.QPixmap()
