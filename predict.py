@@ -17,6 +17,16 @@ from database import Database
 
 
 class Predictor:
+    """
+    Will the user like a particular video? Give the predictor
+    the data dict you got from scraping the video url and the
+    predictor will tell you what the user will rate it.
+
+    Uses a takes a random sample of data from the user's history,
+    does PCA on it to condense highly correlated features, turns
+    that into a vector of numbers, then fits a random forest on
+    it.
+    """
     db    = Database()
     q     = PriorityQueue()
     allX  = []
@@ -41,6 +51,8 @@ class Predictor:
 
 
     def refit_from_scratch(self):
+        """ Create a new model directly from the database, rather
+         than rely on the one saved from last time."""
         print("Model is being retrained. This may take a moment.")
         temp_model = RandomForest(max_features="sqrt", n_jobs=-1)
         temp_enc   = CountVectorizer()
@@ -69,6 +81,8 @@ class Predictor:
 
 
     def predict(self, data):
+        """ Given a dict of video data, predict how much
+         the user will like the video. """
         tags = " ".join(data["tags"])
         tags = self.enc.transform([tags])
         nums = coo_matrix(self.fmt_numerical(data))
@@ -78,7 +92,16 @@ class Predictor:
 
 
     def fmt_numerical(self, data):
+        """
+        There are two categories of data Porn Sieve gathers:
+          1.Tag data, represented as a binary, mostly zero array of numbers
+          2. Data which is continuous, such as duration, average review, etc.
+
+        For the tags, I can just use CountVectorizer out-of-the-box, but for
+        the other data, we need to put it all together in a list on our own.
+        """
         nums = []
+        # sorted to ensure the data is always in the same order
         for k in sorted(data.keys()):
             if k in ["feedback", "img"]:
                 pass
