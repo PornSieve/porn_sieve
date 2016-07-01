@@ -202,7 +202,7 @@ class Window(QtGui.QWidget):
         try:
             r = requests.get(self.cur_img)
         except:
-            time.sleep(1)
+            time.sleep(6)
             r = requests.get(self.cur_img)
 
         if r.status_code == 200:

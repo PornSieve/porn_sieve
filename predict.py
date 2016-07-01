@@ -11,7 +11,7 @@ from PySide   import QtCore
 from queue    import PriorityQueue
 from datetime import datetime
 from copy     import copy
-import os
+import os, sys, shutil
 
 from database import Database
 
@@ -29,7 +29,7 @@ class Predictor:
     """
     db    = Database()
     q     = PriorityQueue()
-    allX  = []
+    threaded_fit = None
 
     def __init__(self):
         fs = os.listdir()
@@ -54,6 +54,11 @@ class Predictor:
         """ Create a new model directly from the database, rather
          than rely on the one saved from last time."""
         print("Model is being retrained. This may take a moment.")
+        # In the background fit a much larger random forest.
+        self.threaded_fit = ThreadedFit()
+        self.threaded_fit.signal_finished.connect(self.__init__)
+        self.threaded_fit.start()
+
         temp_model = RandomForest(max_features="sqrt", n_jobs=-1)
         temp_enc   = CountVectorizer()
         X = []   # binary matrix the presence of tags
@@ -123,6 +128,59 @@ class Predictor:
 
 
     def quit(self):
-        joblib.dump(self.enc,   "enc.pkl"  )
-        joblib.dump(self.model, "model.pkl")
-        joblib.dump(self.pca,   "pca.pkl"  )
+        # this no longer does anything
+        pass
+
+
+class ThreadedFit(QtCore.QThread, Predictor):
+    signal_finished = QtCore.Signal()  # used to reload model when done
+
+    def __init__(self):
+        QtCore.QThread.__init__(self)
+
+    def run(self):
+        # making a copy of the database seems to keep
+        # the scraper fast since there's not much need
+        # for waiting around for the lock.
+        shutil.copyfile("default.db", "_temp.db")
+        db = Database("_temp.db")
+        temp_model = RandomForest(max_features="sqrt", n_jobs=-1)
+        temp_enc   = CountVectorizer()
+        X = []   # binary matrix the presence of tags
+        Z = []   # additional numerical data
+        Y = []   # target (to predict) values
+        db_size = db.size()
+        for i, data in enumerate(db.yield_rated()):
+            if self.verbose: print(i, end=" ")
+            sys.stdout.flush()
+            feedback = data["feedback"]
+            tags     = data[  "tags"  ]
+            if feedback and tags:
+                Y.append(   feedback   )
+                X.append(" ".join(tags))
+                Z.append(self.fmt_numerical(data))
+
+        sys.stdout.flush()
+        X = temp_enc.fit_transform(X)
+        X = hstack((X, coo_matrix(Z)))
+        self.allX = X
+        sys.stdout.flush()
+        pca = PCA(min(X.shape[0], 200))
+        reduced_X = pca.fit_transform(X.todense())
+        sys.stdout.flush()
+        temp_model.fit(reduced_X, Y)
+        sys.stdout.flush()
+
+        pca   = pca
+        model = temp_model
+        enc   = temp_enc
+
+        joblib.dump(enc,   "enc.pkl"  )
+        joblib.dump(model, "model.pkl")
+        joblib.dump(pca,   "pca.pkl"  )
+
+        del db
+        os.remove("_temp.db")
+
+        sys.stdout.flush()
+        self.signal_finished.emit()

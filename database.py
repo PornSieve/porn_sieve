@@ -179,6 +179,7 @@ class Database:
             for url in all_urls:
                 yield self.get(url)
 
+
     def yield_some(self, num):
         with self.lock:
             c = self.cnx.cursor()
@@ -187,4 +188,15 @@ class Database:
 
             for _ in range(min(num, self.size())):
                 url = c.fetchone()[0]
+                yield self.get(url)
+
+
+    def yield_rated(self):
+        with self.lock:
+            c = self.cnx.cursor()
+            # order by newid makes sure we get these back in random order
+            c.execute("SELECT url FROM videos WHERE feedback IS NOT NULL;")
+            all_urls = [f[0] for f in c.fetchall()]
+
+            for url in all_urls:
                 yield self.get(url)
