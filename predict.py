@@ -11,7 +11,7 @@ from PySide   import QtCore
 from queue    import PriorityQueue
 from datetime import datetime
 from copy     import copy
-import os, sys, shutil
+import os, shutil
 
 from database import Database
 
@@ -151,8 +151,6 @@ class ThreadedFit(QtCore.QThread, Predictor):
         Y = []   # target (to predict) values
         db_size = db.size()
         for i, data in enumerate(db.yield_rated()):
-            if self.verbose: print(i, end=" ")
-            sys.stdout.flush()
             feedback = data["feedback"]
             tags     = data[  "tags"  ]
             if feedback and tags:
@@ -160,16 +158,12 @@ class ThreadedFit(QtCore.QThread, Predictor):
                 X.append(" ".join(tags))
                 Z.append(self.fmt_numerical(data))
 
-        sys.stdout.flush()
         X = temp_enc.fit_transform(X)
         X = hstack((X, coo_matrix(Z)))
         self.allX = X
-        sys.stdout.flush()
         pca = PCA(min(X.shape[0], 200))
         reduced_X = pca.fit_transform(X.todense())
-        sys.stdout.flush()
         temp_model.fit(reduced_X, Y)
-        sys.stdout.flush()
 
         pca   = pca
         model = temp_model
@@ -182,5 +176,4 @@ class ThreadedFit(QtCore.QThread, Predictor):
         del db
         os.remove("_temp.db")
 
-        sys.stdout.flush()
         self.signal_finished.emit()
