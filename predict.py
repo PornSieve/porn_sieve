@@ -1,5 +1,6 @@
 from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.linear_model            import PassiveAggressiveRegressor
+from sklearn.ensemble                import RandomForestRegressor as RandomForest
+from sklearn.decomposition           import PCA
 from sklearn.utils.validation        import NotFittedError
 from sklearn.externals               import joblib
 
@@ -21,30 +22,33 @@ class Predictor:
     allX  = []
 
     def __init__(self):
-        if ("model.pkl" in os.listdir()) and ("enc.pkl" in os.listdir()):
+        fs = os.listdir()
+        if  ("model.pkl" in fs) and ("enc.pkl" in fs) and ("pca.pkl" in fs):
             self.model = joblib.load("model.pkl")
-            self.enc = joblib.load("enc.pkl")
+            self.enc   = joblib.load("enc.pkl")
+            self.pca   = joblib.load("pca.pkl")
 
         else:
             self.refit_from_scratch()
 
 
     def fit(self, data):
-        x1 = self.enc.transform([" ".join(data["tags"])])
-        x2 = self.fmt_numerical(data)
-        x  = hstack((x1, coo_matrix(x2)))
-        vstack((self.allX, x))
-        self.model.partial_fit(x.getrow(0), [data["feedback"]])
+        """
+        Currently does nothing, but did (and might in
+        the future) update the model incrementally.
+        """
+        pass
 
 
     def refit_from_scratch(self):
-        temp_model = PassiveAggressiveRegressor(0.1)
+        print("Model is being retrained. This may take a moment.")
+        temp_model = RandomForest(max_features="sqrt", n_jobs=-1)
         temp_enc   = CountVectorizer()
         X = []   # binary matrix the presence of tags
         Z = []   # additional numerical data
         Y = []   # target (to predict) values
         db_size = self.db.size()
-        for data in self.db.yield_all():
+        for data in self.db.yield_some(250):
             feedback = data["feedback"]
             tags     = data[  "tags"  ]
             if feedback and tags:
@@ -55,17 +59,22 @@ class Predictor:
         X = temp_enc.fit_transform(X)
         X = hstack((X, coo_matrix(Z)))
         self.allX = X
-        for i in range(X.shape[0]):
-            temp_model.partial_fit(X.getrow(i), [Y[0]])
+        pca = PCA(min(X.shape[0], 200))
+        reduced_X = pca.fit_transform(X.todense())
+        temp_model.fit(reduced_X, Y)
+
+        self.pca   = pca
         self.model = temp_model
-        self.enc = temp_enc
+        self.enc   = temp_enc
 
 
     def predict(self, data):
         tags = " ".join(data["tags"])
         tags = self.enc.transform([tags])
         nums = coo_matrix(self.fmt_numerical(data))
-        return self.model.predict( hstack((tags, nums)) )[0]
+        x = hstack((tags, nums))
+        x = self.pca.transform(x.todense())
+        return self.model.predict(x)[0]
 
 
     def fmt_numerical(self, data):
@@ -91,5 +100,6 @@ class Predictor:
 
 
     def quit(self):
-        joblib.dump(self.enc, "enc.pkl")
+        joblib.dump(self.enc,   "enc.pkl"  )
         joblib.dump(self.model, "model.pkl")
+        joblib.dump(self.pca,   "pca.pkl"  )

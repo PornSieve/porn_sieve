@@ -66,7 +66,7 @@ class Window(QtGui.QWidget):
         self.left_pane.addSpacing(50)
         self.init_page_btns()
         self.left_pane.addSpacing(25)
-        
+
         # PROGRESS BAR: tracks the progress of the scraper
         self.prog = QtGui.QProgressBar(self)
         self.left_pane.addWidget(self.prog)
@@ -114,7 +114,7 @@ class Window(QtGui.QWidget):
         self.slider.setTickPosition(QtGui.QSlider.TicksBothSides)
         self.slider.setTickInterval(20)
         self.mid_pane.addWidget(self.slider)
-        
+
         self.layout.addLayout(self.mid_pane)
 
 
@@ -179,7 +179,8 @@ class Window(QtGui.QWidget):
 
         self.n_pgs_spn = QtGui.QSpinBox(self)
         self.n_pgs_spn.valueChanged[int].connect(self.set_max_pgs)
-        
+        self.n_pgs_spn.setMinimum(1)
+
         self.n_pgs_group.addWidget(self.n_pgs_lbl)        # "pages to scrape"
         self.n_pgs_group.addWidget(self.n_pgs_spn)        # <spinbox>
         self.n_pgs_group.setAlignment(QtCore.Qt.Vertical)
@@ -198,7 +199,12 @@ class Window(QtGui.QWidget):
 
 
     def refresh_images(self):
-        r = requests.get(self.cur_img)
+        try:
+            r = requests.get(self.cur_img)
+        except:
+            time.sleep(1)
+            r = requests.get(self.cur_img)
+
         if r.status_code == 200:
             pixmap = QtGui.QPixmap()
             pixmap.loadFromData(r.content)

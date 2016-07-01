@@ -178,3 +178,13 @@ class Database:
 
             for url in all_urls:
                 yield self.get(url)
+
+    def yield_some(self, num):
+        with self.lock:
+            c = self.cnx.cursor()
+            # order by newid makes sure we get these back in random order
+            c.execute("SELECT url FROM videos ORDER BY RANDOM();")
+
+            for _ in range(min(num, self.size())):
+                url = c.fetchone()[0]
+                yield self.get(url)

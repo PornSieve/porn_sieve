@@ -56,3 +56,16 @@ How to use:
     Pressing quit directly will save your model and encoder in its current
     state. Without it, a new model must be train from scratch which depend-
     ing on the amount of data saved, can take a long time.
+
+
+Troubleshooting:
+
+    If anything goes wrong try:
+
+        1. Turning it on and then off again.
+
+        2. Deleting *.pkl files and then hitting "recalculate prediction model."
+
+        3. Deleting default.db (will remove your rate history).
+
+        4. Leave an issue so I can fix it.
