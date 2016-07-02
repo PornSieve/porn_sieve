@@ -53,7 +53,6 @@ class Predictor:
     def refit_from_scratch(self):
         """ Create a new model directly from the database, rather
          than rely on the one saved from last time."""
-        print("Model is being retrained. This may take a moment.")
         # In the background fit a much larger random forest.
         self.threaded_fit = ThreadedFit()
         self.threaded_fit.signal_finished.connect(self.__init__)
@@ -142,6 +141,7 @@ class ThreadedFit(QtCore.QThread, Predictor):
         # making a copy of the database seems to keep
         # the scraper fast since there's not much need
         # for waiting around for the lock.
+        print("threaded fit running.")
         shutil.copyfile("default.db", "_temp.db")
         db = Database("_temp.db")
         temp_model = RandomForest(max_features="sqrt", n_jobs=-1)
@@ -177,3 +177,4 @@ class ThreadedFit(QtCore.QThread, Predictor):
         os.remove("_temp.db")
 
         self.signal_finished.emit()
+        print("background fitting complete.")
