@@ -1,4 +1,4 @@
-import sys, time, random
+import sys, time, random, copy
 
 from threading import Thread, RLock
 from queue     import PriorityQueue
@@ -17,22 +17,22 @@ class Window(QtGui.QWidget):
     """ The graphical interface to the software that the user sees. """
     def __init__(self):
         super(Window, self).__init__()
-        self.site     = "xvideos"
-        self.xpaths   = get_niche_xpaths(self.site)
-        self.start_pg = 0
-        self.max_pgs  = 0
-        self.cur_vid  = None
-        self.cur_img  = None
+        self.site      = "xvideos"
+        self.xpaths    = get_niche_xpaths(self.site)
+        self.start_pg  = 0
+        self.max_pgs   = 0
+        self.cur_vid   = None
+        self.cur_img   = None
+        self.last_pred = None
+        self.default_img_flag = True
+        self.preview_size     = 2**9  # arbitrary number
 
-        self.winlock    = RLock()
-        self.thr        = None
-
+        self.winlock   = RLock()
+        self.thr       = None
         self.db  = Database()
         self.q   = PriorityQueue()
 
-        self.default_img_flag = True
-
-        self.preview_size = 2**9  # arbitrary number
+        self.set_keybindings()
 
         # Create the entirety of the GUI and
         # link to appropriate functions.
@@ -47,6 +47,27 @@ class Window(QtGui.QWidget):
         self.show()
 
         self.predict = Predictor()
+
+
+    def set_keybindings(self):
+        bind = lambda k, f: QtGui.QShortcut(QtGui.QKeySequence(k), self, f)
+        bind(QtCore.Qt.Key_Tab, self.skip)
+        bind(QtCore.Qt.Key_Right, self.skip)
+        bind(QtCore.Qt.Key_Left, self.unpop_video)
+        bind(QtCore.Qt.Key_O, lambda: webbrowser.open(self.cur_vid)) # Key_"oh"
+        # eval isn't working here for some reason; even with a macro, this is ugle
+        bind(QtCore.Qt.Key_0, lambda: self.slider.setValue(0*11))       # Key_"zero"
+        bind(QtCore.Qt.Key_1, lambda: self.slider.setValue(1*11))
+        bind(QtCore.Qt.Key_2, lambda: self.slider.setValue(2*11))
+        bind(QtCore.Qt.Key_3, lambda: self.slider.setValue(3*11))
+        bind(QtCore.Qt.Key_4, lambda: self.slider.setValue(4*11))
+        bind(QtCore.Qt.Key_5, lambda: self.slider.setValue(5*11))
+        bind(QtCore.Qt.Key_6, lambda: self.slider.setValue(6*11))
+        bind(QtCore.Qt.Key_7, lambda: self.slider.setValue(7*11))
+        bind(QtCore.Qt.Key_8, lambda: self.slider.setValue(8*11))
+        bind(QtCore.Qt.Key_9, lambda: self.slider.setValue(9*11))
+
+        bind(QtCore.Qt.Key_Enter, self.rate)
 
 
     def init_left_pane(self):
@@ -242,7 +263,10 @@ class Window(QtGui.QWidget):
             self.img.update()
             self.repaint()
         r.close()
-        data = self.db.get(self.cur_vid)
+        try:
+            data = self.db.get(self.cur_vid)
+        except:
+            import pdb; pdb.set_trace()
 
         self.setWindowTitle(data["name"])
         info_str = "dur: {}\n\nviews: {}\n\nprediction: {}\n\ntags: {}"
@@ -265,14 +289,27 @@ class Window(QtGui.QWidget):
 
 
     def pop_video(self):
+        """ Remove a video from the queue and display in the program. """
         if self.q.empty():
             self.info_box.setText("Video queue empty.")
             self.repaint()
             return self.last_pred, self.cur_vid
+        # TODO last_pred should be called cur_pred
+        self.prev_pred = copy.copy(self.last_pred)
+        self.prev_vid  = copy.copy(self.cur_vid)
+        self.prev_img  = copy.copy(self.cur_img)
         self.last_pred, self.cur_vid = self.q.get()
         self.last_pred *= -1
         self.cur_img = self.db.get_img(self.cur_vid)
         return self.last_pred, self.cur_vid
+
+
+    def unpop_video(self):
+        """ Undo previous pop_video. """
+        # swap prev with cur
+        self.cur_vid, self.prev_vid = self.prev_vid, self.cur_vid
+        self.cur_img, self.prev_img = self.prev_img, self.cur_img
+        self.refresh_images()
 
 
     def set_start_pg(self, num):
