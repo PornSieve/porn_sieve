@@ -67,7 +67,8 @@ class Window(QtGui.QWidget):
         bind(QtCore.Qt.Key_8, lambda: self.slider.setValue(8*11))
         bind(QtCore.Qt.Key_9, lambda: self.slider.setValue(9*11))
 
-        bind(QtCore.Qt.Key_Enter, self.rate)
+        bind(QtCore.Qt.Key_Enter, self.rate)  # keypad enter
+        bind(QtCore.Qt.Key_Return, self.rate)  # regular enter
 
 
     def init_left_pane(self):
