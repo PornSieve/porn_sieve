@@ -58,6 +58,15 @@ How to use:
     ing on the amount of data saved, can take a long time.
 
 
+Keybindings:
+    o       open current link in browser
+    tab     skip
+    right   skip
+    left    unskip (go back to previous)
+    0-9     set slider position
+    enter   rate video
+
+
 Troubleshooting:
 
     If anything goes wrong try:
