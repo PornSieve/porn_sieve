@@ -1,6 +1,6 @@
 import sys, time, random, copy
 
-from threading import Thread, RLock
+from threading import RLock
 from queue     import PriorityQueue
 
 from PySide import QtGui, QtCore
@@ -241,7 +241,6 @@ class Window(QtGui.QWidget):
 
 
     def save_usr_url(self):
-        sys.stdout.flush()
         url = self.load_url_box.text()
         data = scrape_video(url)
         self.db.save(data)
@@ -264,10 +263,7 @@ class Window(QtGui.QWidget):
             self.img.update()
             self.repaint()
         r.close()
-        try:
-            data = self.db.get(self.cur_vid)
-        except:
-            import pdb; pdb.set_trace()
+        data = self.db.get(self.cur_vid)
 
         self.setWindowTitle(data["name"])
         info_str = "dur: {}\n\nviews: {}\n\nprediction: {}\n\ntags: {}"
@@ -300,6 +296,9 @@ class Window(QtGui.QWidget):
         self.prev_vid  = copy.copy(self.cur_vid)
         self.prev_img  = copy.copy(self.cur_img)
         self.last_pred, self.cur_vid = self.q.get()
+        # PriorityQueue pops the smallest items first, so we have to
+        # remember to get rid of the negative sign we used to make
+        # predictions of high ratings the smallest items.
         self.last_pred *= -1
         self.cur_img = self.db.get_img(self.cur_vid)
         return self.last_pred, self.cur_vid
@@ -323,10 +322,6 @@ class Window(QtGui.QWidget):
 
     def scrape(self):
         if self.thr:
-            self.thr.exit_flag = True
-            for _ in range(4):
-                if not self.thr.exit_ready:
-                    time.sleep(0.25)
             del self.thr
         self.update_prog(0)
         self.thr = PopulateQ(
@@ -387,10 +382,7 @@ class Window(QtGui.QWidget):
         self.db.cnx.close()
         self.predict.quit()
         if self.thr:
-            self.thr.exit_flag = True
-            for _ in range(4):
-                if not self.thr.exit_ready:
-                    time.sleep(0.25)
+            del self.thr
         QtCore.QCoreApplication.instance().quit()
 
 

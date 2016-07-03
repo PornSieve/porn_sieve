@@ -5,9 +5,9 @@ from threading import RLock
 
 class Database:
     lock = RLock()
-    def __init__(self, dbname="default.db"):
+    def __init__(self, dbname="usr_data/default.db"):
         # check to see if there's a database open
-        self.cnx = sqlite3.connect("default.db")
+        self.cnx = sqlite3.connect(dbname)
         c = self.cnx.cursor()
         c.execute('''CREATE TABLE IF NOT EXISTS videos
                      (url         TEXT PRIMARY KEY,
