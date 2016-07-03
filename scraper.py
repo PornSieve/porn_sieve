@@ -8,93 +8,10 @@ import csv
 import re
 from datetime import datetime
 
-from refactored_scrape import site_selector
-from misc              import memoize
-from predict           import Predictor
-from database          import Database
-
-
-def download(url):
-    r = requests.get(url)
-    r.raise_for_status()
-    r.close()
-    return html.fromstring(r.text)
-
-
-@memoize
-def scrape_video(url):
-    assert type(url) == str
-    if "xvideos" in url:
-        dirty = re.compile("[^a-zA-Z0-9\ _]*")
-        clean = lambda s: dirty.sub("", s).lower()
-        try:
-            pg = download(url)
-        except requests.exceptions.HTTPError:
-            # This is needed when a deleted video shows up in the gallery
-            return False
-        with open("xvideos/vid_data.csv") as f:
-            xpaths = {k: v for k, v in csv.reader(f, delimiter="|")}
-        data = {}
-        data["name"]  = clean(pg.xpath(xpaths["name"])[0])
-        data["url"]   = url
-        data["img"]   = None
-        data["stars"] = [clean(star) for star in pg.xpath(xpaths["stars"])]
-        data["tags"]  = [clean(tag)  for tag  in pg.xpath(xpaths["tags"]) ]
-        data["tags"] += data["name"].split()
-        data["views"] = float(clean(pg.xpath(xpaths["views"])[0]))
-        data["likes"] = float(clean(pg.xpath(xpaths["likes"])[0]))
-        data["scrape_date"] = (datetime.now() - datetime.utcfromtimestamp(0)).total_seconds()
-
-        # Calculating the length of the video is a pain in the ass.
-        dur = 0
-        segments = pg.xpath(xpaths["dur"])[0].split()
-        while segments:
-            if segments[0] == "-":
-                segments.pop(0)
-
-            if segments[1] == "sec":
-                dur += float(segments[0]) / 60
-                segments.pop(0)
-                segments.pop(0)
-
-            elif segments[1] == "min":
-                dur += float(segments[0])
-                segments.pop(0)
-                segments.pop(0)
-
-            elif segments[0][-1] == "h":
-                dur += float(segments[0][:-1]) * 60
-                segments.pop(0)
-        data["dur"] = dur
-
-        return data
-
-    else:
-        raise NotImplementedError
-
-
-def scrape_gallery(url):
-    # TODO turn this into a class-inheritance situation?
-    if "xvideos" in url:
-        base = "http://www.xvideos.com"
-        pg = download(url)
-        # TODO: currently these names are biased in favor of xvids
-        vid_urls = pg.xpath(vid_xpath)
-        img_urls = [img_munge(elem) for elem in pg.xpath(img_xpath)]
-        img_urls = [mozaique_munge(url) for url in img_urls]
-        for vid, img in zip(vid_urls, img_urls):
-            yield base + vid, img
-
-    elif "pornhub" in url:
-        base = "http://www.pornhub.com"
-        pg = download(url)
-        vid_urls = pg.xpath(vid_xpath)
-        img_urls = [img_munge(url) for url in pg.xpath(img_xpath)]
-        for vid, img in zip(vid_urls, img_urls):
-            yield base + vid, img
-
-    else:
-        raise NotImplementedError
+from site_interfaces import site_selector
+from misc            import memoize
+from predict         import Predictor
+from database        import Database
 
 
 class PopulateQ(QtCore.QThread):

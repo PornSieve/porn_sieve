@@ -20,25 +20,6 @@ def get_niche_xpaths(site_name):
         return {k: v for k, v in csv.reader(f)}
 
 
-def fmt_gallery(site_name, niche, page):
-    if "xvideos" in site_name:
-        base_url = "http://www.xvideos.com"
-        sub_url  = get_niche_xpaths("xvideos")[niche]
-        if "New" in niche:
-            if page == 0:
-                return base_url
-            else:
-                return base_url + "/new/" + str(page)
-
-        elif "Best" in niche:
-            return base_url + sub_url + "/" + str(page)
-
-        else:
-            return base_url + sub_url.replace("/c/", "/c/%i/" % page)
-    else:
-        raise NotImplementedError
-
-
 def fmt_img(img_url, pic_num, total_pics):
     """ Replace the image preview url with a link to
       some preview in between. Indexes from zero. """

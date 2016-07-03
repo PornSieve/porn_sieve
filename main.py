@@ -7,8 +7,8 @@ from PySide import QtGui, QtCore
 import requests
 import webbrowser
 
-from misc      import get_niche_xpaths, fmt_img, redo_predictions
-from scraper   import PopulateQ, scrape_video
+from misc      import redo_predictions, get_niche_xpaths
+from scraper   import PopulateQ
 from database  import Database
 from predict   import Predictor
 
