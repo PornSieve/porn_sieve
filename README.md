@@ -78,3 +78,9 @@ Troubleshooting:
         3. Deleting default.db (will remove your rate history).
 
         4. Leave an issue so I can fix it.
+
+Contributing:
+
+    Don't be shy about making changes or suggestions or asking me directly what
+    the hell I was thinking with a certain bit of code. Check out the git wiki
+    for a general overview of how I've organized the code.
