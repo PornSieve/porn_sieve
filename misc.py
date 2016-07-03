@@ -1,8 +1,6 @@
 import csv
 import re
 
-from sklearn.preprocessing import MultiLabelBinarizer
-
 from database import Database
 from predict  import Predictor
 

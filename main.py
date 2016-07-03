@@ -54,9 +54,9 @@ class Window(QtGui.QWidget):
         bind(QtCore.Qt.Key_Tab, self.skip)
         bind(QtCore.Qt.Key_Right, self.skip)
         bind(QtCore.Qt.Key_Left, self.unpop_video)
-        bind(QtCore.Qt.Key_O, lambda: webbrowser.open(self.cur_vid)) # Key_"oh"
-        # eval isn't working here for some reason; even with a macro, this is ugle
-        bind(QtCore.Qt.Key_0, lambda: self.slider.setValue(0*11))       # Key_"zero"
+        bind(QtCore.Qt.Key_O, lambda: webbrowser.open(self.cur_vid))  # letter, not number
+        # eval isn't working here for some reason; even with a macro, this is ugly
+        bind(QtCore.Qt.Key_0, lambda: self.slider.setValue(0*11))     # number, not letter
         bind(QtCore.Qt.Key_1, lambda: self.slider.setValue(1*11))
         bind(QtCore.Qt.Key_2, lambda: self.slider.setValue(2*11))
         bind(QtCore.Qt.Key_3, lambda: self.slider.setValue(3*11))

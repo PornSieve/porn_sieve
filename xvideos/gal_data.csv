@@ -1,0 +1,2 @@
+vid_xpath|//a[starts-with(@href, '/video')]/@href
+img_xpath|//div[@class='thumb']/script

@@ -8,10 +8,10 @@ import csv
 import re
 from datetime import datetime
 
-from xvideos.gallery import *
-from misc            import fmt_gallery, memoize
-from predict         import Predictor
-from database        import Database
+from refactored_scrape import site_selector
+from misc              import memoize
+from predict           import Predictor
+from database          import Database
 
 
 def download(url):
@@ -74,12 +74,22 @@ def scrape_video(url):
 
 
 def scrape_gallery(url):
+    # TODO turn this into a class-inheritance situation?
     if "xvideos" in url:
         base = "http://www.xvideos.com"
         pg = download(url)
+        # TODO: currently these names are biased in favor of xvids
         vid_urls = pg.xpath(vid_xpath)
         img_urls = [img_munge(elem) for elem in pg.xpath(img_xpath)]
         img_urls = [mozaique_munge(url) for url in img_urls]
+        for vid, img in zip(vid_urls, img_urls):
+            yield base + vid, img
+
+    elif "pornhub" in url:
+        base = "http://www.pornhub.com"
+        pg = download(url)
+        vid_urls = pg.xpath(vid_xpath)
+        img_urls = [img_munge(url) for url in pg.xpath(img_xpath)]
         for vid, img in zip(vid_urls, img_urls):
             yield base + vid, img
 
@@ -89,6 +99,7 @@ def scrape_gallery(url):
 
 class PopulateQ(QtCore.QThread):
     updateProgress = QtCore.Signal(int)
+
     def __init__(self,       site,    niche,   q,
                  start_pg,   max_pgs, winlock, predictor):
         QtCore.QThread.__init__(self)
@@ -102,23 +113,18 @@ class PopulateQ(QtCore.QThread):
         self.exit_ready = False
         self.pred = predictor
 
+
     def run(self):
         db = Database()
+        site = site_selector(self.site)
         for i in range(self.start_pg, self.start_pg + self.max_pgs + 1):
-            gal_url = fmt_gallery(self.site, self.niche, i)
-            for j, (vid_url, img_url) in enumerate(scrape_gallery(gal_url)):
+            gal_url = site.fmt_gallery(self.niche, i)
+            for j, (vid_url, img_url) in enumerate(site.scrape_gallery(gal_url)):
                 # update progress bar
                 progress = (i * 20 + j) / ((self.max_pgs+1) * 20) * 100
                 self.updateProgress.emit(progress)
 
-                assert vid_url
-                with self.winlock:
-                    if self.exit_flag:
-                        print("Thread here; exit call recevied")
-                        self.exit_ready = True
-                        return None
-
-                data = scrape_video(vid_url)
+                data = site.scrape_video(vid_url)
                 if not data:
                     continue
                 data["img"] = img_url
