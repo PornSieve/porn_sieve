@@ -32,11 +32,11 @@ class Predictor:
     threaded_fit = None
 
     def __init__(self):
-        fs = os.listdir()
+        fs = os.listdir("usr_data")
         if  ("model.pkl" in fs) and ("enc.pkl" in fs) and ("pca.pkl" in fs):
-            self.model = joblib.load("model.pkl")
-            self.enc   = joblib.load("enc.pkl")
-            self.pca   = joblib.load("pca.pkl")
+            self.model = joblib.load("usr_data/model.pkl")
+            self.enc   = joblib.load("usr_data/enc.pkl")
+            self.pca   = joblib.load("usr_data/pca.pkl")
 
         else:
             self.refit_from_scratch()
@@ -169,9 +169,9 @@ class ThreadedFit(QtCore.QThread, Predictor):
         model = temp_model
         enc   = temp_enc
 
-        joblib.dump(enc,   "enc.pkl"  )
-        joblib.dump(model, "model.pkl")
-        joblib.dump(pca,   "pca.pkl"  )
+        joblib.dump(enc,   "usr_data/enc.pkl"  )
+        joblib.dump(model, "usr_data/model.pkl")
+        joblib.dump(pca,   "usr_data/pca.pkl"  )
 
         del db
         os.remove("_temp.db")
