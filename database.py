@@ -5,7 +5,7 @@ from threading import RLock
 
 class Database:
     lock = RLock()
-    def __init__(self, dbname="usr_data/default.db"):
+    def __init__(self, dbname="default.db"):
         # check to see if there's a database open
         self.cnx = sqlite3.connect(dbname)
         c = self.cnx.cursor()

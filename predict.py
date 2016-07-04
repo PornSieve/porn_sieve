@@ -27,7 +27,7 @@ class Predictor:
     that into a vector of numbers, then fits a random forest on
     it.
     """
-    db    = Database()
+    db    = Database("default.db")
     q     = PriorityQueue()
     threaded_fit = None
 
