@@ -7,10 +7,11 @@ from PySide import QtGui, QtCore
 import requests
 import webbrowser
 
-from misc      import redo_predictions, get_niche_xpaths
-from scraper   import PopulateQ
-from database  import Database
-from predict   import Predictor
+from misc            import redo_predictions, get_niche_xpaths
+from scraper         import PopulateQ
+from database        import Database
+from predict         import Predictor
+from site_interfaces import site_selector
 
 
 class Window(QtGui.QWidget):
@@ -29,8 +30,9 @@ class Window(QtGui.QWidget):
 
         self.winlock   = RLock()
         self.thr       = None
-        self.db  = Database()
-        self.q   = PriorityQueue()
+        self.q         = PriorityQueue()
+        self.db        = Database()
+        self.scraper   = site_selector(self.site)
 
         self.set_keybindings()
 
@@ -242,7 +244,7 @@ class Window(QtGui.QWidget):
 
     def save_usr_url(self):
         url = self.load_url_box.text()
-        data = scrape_video(url)
+        data = self.scraper.scrape_video(url)
         self.db.save(data)
         self.db.give_feedback(url, self.feedback_spin.value())
         print("finished")
